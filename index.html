@@ -148,7 +148,7 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 6px; font-size: 1
       whoTitle: "Who is using this device?", newPersonPh: "New name", addPerson: "Add",
       pasteLabel: "Paste one or more links (one per line)",
       paste: "📋 Paste", download: "⬇️ Download",
-      help: "Files are saved straight to this device. Works with direct links (zip, exe, photos, PDF, MP3, MP4…) and GitHub files, folders and repos. Video pages like YouTube, Instagram and TikTok can't be downloaded without a PC.",
+      help: "Files are saved straight to this device. Works with direct links (zip, exe, photos, PDF, MP3, MP4…) and GitHub files, folders and repos. Video links (YouTube, Pinterest, Instagram, TikTok…) open in cobalt.tools, a free website that saves the video to your device.",
       tabActive: "Downloading", tabHistory: "History", search: "Search history", everyone: "Everyone",
       nothingActive: "Nothing downloading right now.", noHistory: "No downloads yet.", noMatch: "Nothing matches.",
       of: "{a} of {b}", starting: "Starting…", zipping: "Making zip…", files: "{a} of {b} files",
@@ -159,7 +159,8 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 6px; font-size: 1
       again: "⬇️ Download again", copy: "🔗 Copy link", forget: "🗑 Remove",
       clearAll: "Clear all history", clearQ: "Clear the whole history on this device?",
       linkCopied: "Link copied", pasteFirst: "Paste a link first.", pasteManual: "Long-press the box and choose Paste.",
-      notLink: "Not a link: {u}", videoSite: "Video sites (YouTube, Instagram, TikTok…) need a PC to download. Skipped: {u}",
+      notLink: "Not a link: {u}", videoSite: "Opening cobalt.tools to save the video. The link is also copied in case you need to paste it there.",
+      cobalt: "🎬 Download with cobalt", viaCobalt: "↗ Sent to cobalt", cobaltNote: "Video links are downloaded by cobalt.tools. If its page didn't open, tap the button.",
       pickWho: "Choose who you are first.",
       ghLimit: "GitHub limit reached (60 folder lookups per hour). Try again later.",
       ghNotFound: "GitHub folder not found (is the repository private?)", ghEmpty: "That GitHub folder is empty.",
@@ -170,7 +171,7 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 6px; font-size: 1
       whoTitle: "من يستخدم هذا الجهاز؟", newPersonPh: "اسم جديد", addPerson: "إضافة",
       pasteLabel: "الصق رابطاً أو أكثر (رابط في كل سطر)",
       paste: "📋 لصق", download: "⬇️ تنزيل",
-      help: "تُحفظ الملفات مباشرة على هذا الجهاز. يعمل مع الروابط المباشرة (zip و exe والصور و PDF و MP3 و MP4…) وملفات ومجلدات ومستودعات GitHub. صفحات الفيديو مثل يوتيوب وإنستغرام وتيك توك تحتاج إلى كمبيوتر.",
+      help: "تُحفظ الملفات مباشرة على هذا الجهاز. يعمل مع الروابط المباشرة (zip و exe والصور و PDF و MP3 و MP4…) وملفات ومجلدات ومستودعات GitHub. روابط الفيديو (يوتيوب، بنترست، إنستغرام، تيك توك…) تُفتح في موقع cobalt.tools المجاني الذي يحفظ الفيديو على جهازك.",
       tabActive: "قيد التنزيل", tabHistory: "السجل", search: "ابحث في السجل", everyone: "الجميع",
       nothingActive: "لا يوجد شيء قيد التنزيل الآن.", noHistory: "لا توجد تنزيلات بعد.", noMatch: "لا توجد نتائج.",
       of: "{a} من {b}", starting: "جارٍ البدء…", zipping: "جارٍ إنشاء ملف zip…", files: "{a} من {b} ملفات",
@@ -181,7 +182,8 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 6px; font-size: 1
       again: "⬇️ تنزيل مرة أخرى", copy: "🔗 نسخ الرابط", forget: "🗑 حذف",
       clearAll: "مسح السجل كله", clearQ: "مسح السجل كله على هذا الجهاز؟",
       linkCopied: "تم نسخ الرابط", pasteFirst: "الصق رابطاً أولاً.", pasteManual: "اضغط مطولاً على المربع واختر لصق.",
-      notLink: "ليس رابطاً: {u}", videoSite: "مواقع الفيديو (يوتيوب، إنستغرام، تيك توك…) تحتاج إلى كمبيوتر. تم تخطي: {u}",
+      notLink: "ليس رابطاً: {u}", videoSite: "جارٍ فتح cobalt.tools لحفظ الفيديو. تم نسخ الرابط أيضاً إذا احتجت لصقه هناك.",
+      cobalt: "🎬 تنزيل عبر cobalt", viaCobalt: "↗ أُرسل إلى cobalt", cobaltNote: "روابط الفيديو تُنزَّل عبر cobalt.tools. إذا لم تُفتح صفحته، اضغط الزر.",
       pickWho: "اختر من أنت أولاً.",
       ghLimit: "تم الوصول إلى حد GitHub (60 طلباً في الساعة). حاول لاحقاً.",
       ghNotFound: "لم يتم العثور على مجلد GitHub (هل المستودع خاص؟)", ghEmpty: "مجلد GitHub هذا فارغ.",
@@ -223,10 +225,16 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 6px; font-size: 1
       : d.toLocaleDateString(loc, { day: "numeric", month: "short", year: d.getFullYear() === now.getFullYear() ? undefined : "numeric" });
   }
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-  const KIND = { file: "📦", github: "📁" };
+  const KIND = { file: "📦", github: "📁", video: "🎬" };
 
   const VIDEO_SITES = ["youtube.com", "youtu.be", "instagram.com", "tiktok.com", "facebook.com", "fb.watch",
-    "twitter.com", "x.com", "vimeo.com", "dailymotion.com", "twitch.tv", "soundcloud.com", "snapchat.com", "threads.net"];
+    "twitter.com", "x.com", "vimeo.com", "dailymotion.com", "twitch.tv", "soundcloud.com", "snapchat.com", "threads.net",
+    "pinterest.com", "pin.it", "reddit.com", "bilibili.com", "tumblr.com", "bsky.app", "streamable.com", "ok.ru", "vk.com", "rutube.ru", "loom.com"];
+  const cobaltUrl = (u) => "https://cobalt.tools/#" + encodeURIComponent(u); // cobalt fills the box and starts saving
+  function openCobalt(u) {
+    try { navigator.clipboard.writeText(u).catch(() => {}); } catch (e) {}
+    window.open(cobaltUrl(u), "_blank", "noopener");
+  }
   function hostOf(u) { try { return new URL(u).hostname.toLowerCase(); } catch (e) { return ""; } }
   const isVideoSite = (u) => { const h = hostOf(u); return VIDEO_SITES.some((s) => h === s || h.endsWith("." + s)); };
 
@@ -397,13 +405,18 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 6px; font-size: 1
     const urls = $("urls").value.split(/\s+/).map((s) => s.trim()).filter(Boolean);
     if (!urls.length) return toast(t("pasteFirst"));
     if (!user) { renderPeople(); $("whoCard").classList.remove("hidden"); return toast(t("pickWho")); }
-    let started = 0;
+    let started = 0, openedCobalt = false;
     for (const u of urls) {
       if (!/^(https?:\/\/|magnet:)/i.test(u)) { toast(t("notLink", { u })); continue; }
-      if (isVideoSite(u)) { toast(t("videoSite", { u: hostOf(u) })); continue; }
+      if (isVideoSite(u)) {
+        // the first one opens right away (needs the tap); the rest wait in History
+        if (!openedCobalt) { openCobalt(u); openedCobalt = true; toast(t("videoSite")); }
+        history.unshift({ id: uid(), kind: "video", name: u, url: u, user, status: "cobalt", size: 0, time: Date.now() });
+        saveHistory(); started++; continue;
+      }
       start(u); started++;
     }
-    if (started) { $("urls").value = ""; showTab("active"); }
+    if (started) { $("urls").value = ""; showTab(jobs.size ? "active" : "history"); }
   };
 
   // ---------- tabs
@@ -459,7 +472,7 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 6px; font-size: 1
     const list = history.filter((h) => (who === "all" || h.user === who) &&
       (!q || (h.name + " " + h.url + " " + (h.user || "")).toLowerCase().includes(q)));
     if (!list.length) { $("historyList").innerHTML = `<div class="empty">${t(history.length ? "noMatch" : "noHistory")}</div>`; return; }
-    const st = { done: ["status-done", "done"], handed: ["status-paused", "handed"], error: ["status-error", "failed"] };
+    const st = { done: ["status-done", "done"], handed: ["status-paused", "handed"], cobalt: ["status-paused", "viaCobalt"], error: ["status-error", "failed"] };
     $("historyList").innerHTML = list.slice(0, 300).map((h) => {
       const [cls, key] = st[h.status] || st.error;
       return `<div class="item">
@@ -467,9 +480,10 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 6px; font-size: 1
       <div class="meta"><span class="${cls}">${t(key)}</span><span>${esc(when(h.time))}</span>
         ${h.size ? `<bdi>${size(h.size)}</bdi>` : ""}${h.user ? `<span class="chip">${bdi(h.user)}</span>` : ""}</div>
       ${h.status === "handed" ? `<div class="meta">${t("handedNote")}</div>` : ""}
+      ${h.status === "cobalt" ? `<div class="meta">${t("cobaltNote")}</div>` : ""}
       ${h.error ? `<div class="meta status-error"><bdi>${esc(h.error)}</bdi></div>` : ""}
       <div class="actions">
-        ${h.status === "handed" ? `<button class="small primary" data-open="${esc(h.directUrl || h.url)}">${t("openBrowser")}</button>` : `<button class="small" data-again="${esc(h.url)}">${t("again")}</button>`}
+        ${h.status === "cobalt" ? `<button class="small primary" data-cobalt="${esc(h.url)}">${t("cobalt")}</button>` : h.status === "handed" ? `<button class="small primary" data-open="${esc(h.directUrl || h.url)}">${t("openBrowser")}</button>` : `<button class="small" data-again="${esc(h.url)}">${t("again")}</button>`}
         <button class="small" data-copy="${esc(h.url)}">${t("copy")}</button>
         <button class="small" data-forget="${esc(h.id)}">${t("forget")}</button>
       </div></div>`;
@@ -482,6 +496,7 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 6px; font-size: 1
     if (b.dataset.copy) {
       try { await navigator.clipboard.writeText(b.dataset.copy); toast(t("linkCopied")); } catch (err) { toast(b.dataset.copy); }
     } else if (b.dataset.open) { handOff(b.dataset.open);
+    } else if (b.dataset.cobalt) { openCobalt(b.dataset.cobalt);
     } else if (b.dataset.again) { start(b.dataset.again); showTab("active"); }
     else if (b.dataset.forget) { history = history.filter((h) => h.id !== b.dataset.forget); saveHistory(); renderHistory(); }
   });

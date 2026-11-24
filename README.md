@@ -14,6 +14,7 @@ A download manager for me and my family that runs entirely in the browser. No PC
   - a file link (`.../blob/...`) downloads that file,
   - a repo link (`github.com/user/repo`) downloads the whole repo as a zip.
   - GitHub allows 60 folder lookups per hour per network without signing in.
+- **Video links** (YouTube, Pinterest, Instagram, TikTok…) open in cobalt.tools to save the video (see below).
 - **History** of everything downloaded on this device, with search, filter by person, Download again, Copy link and Remove.
 - **Family profiles:** the first time, the page asks "Who is using this device?". Pick a name or add one; each download records who added it. Tap the name at the top to switch.
 - **Arabic / English:** tap **ع** at the top for Arabic (right-to-left), **EN** to go back. Devices set to Arabic open in Arabic.
@@ -21,7 +22,7 @@ A download manager for me and my family that runs entirely in the browser. No PC
 
 ## What it can't do
 
-- **Video pages** like YouTube, Instagram, TikTok and Facebook. These hide the real video file, and only a program such as yt-dlp running on a computer can extract it. A web page alone can't. The page tells you when it skips one.
+- **Video pages** like YouTube, Pinterest, Instagram, TikTok and Facebook hide the real video file, so the page can't save them by itself. Instead it opens them in [cobalt.tools](https://cobalt.tools), a free website that saves the video to your device: the link is filled in and saving starts automatically. History keeps a **Download with cobalt** button for each video link. cobalt is a third-party service; if it's down or a site is unsupported, those videos won't download.
 - **Torrents:** magnet links are passed to a torrent app if one is installed.
 - History and profiles are stored on each device (in the browser), not shared between devices.
 
