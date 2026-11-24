@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Download maniger</title>
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Downloads">
+<style>
+:root {
+  --bg: #f4f6fb; --card: #ffffff; --text: #111827; --muted: #6b7280; --line: #e5e7eb;
+  --accent: #2563eb; --accent-text: #ffffff; --ok: #16a34a; --bad: #dc2626; --warn: #d97706;
+  --bar: #e5e7eb; --chip: #eef2ff; --chip-text: #3730a3;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1020; --card: #151b2e; --text: #e5e7eb; --muted: #9ca3af; --line: #263049;
+    --accent: #3b82f6; --bar: #263049; --chip: #1e2a4a; --chip-text: #c7d2fe;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, Tahoma, Arial, sans-serif; }
+body { padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+.wrap { max-width: 760px; margin: 0 auto; padding: 12px 16px 48px; }
+header { display: flex; align-items: center; gap: 10px; padding: 6px 0 12px; }
+header h1 { font-size: 20px; margin: 0; flex: 1; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); display: inline-block; }
+.dot.ok { background: var(--ok); } .dot.bad { background: var(--bad); }
+button, .btn { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--text);
+  border-radius: 10px; padding: 8px 12px; cursor: pointer; text-decoration: none; display: inline-flex;
+  align-items: center; gap: 6px; min-height: 40px; }
+button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+button.small, .btn.small { min-height: 34px; padding: 4px 10px; font-size: 14px; }
+button:disabled { opacity: .5; cursor: default; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+textarea, input, select { font: inherit; width: 100%; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--text); }
+textarea { min-height: 76px; resize: vertical; }
+label { display: block; font-size: 14px; color: var(--muted); margin: 10px 0 4px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.row.end { justify-content: flex-end; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; flex: 1; min-width: 240px; }
+.seg button { border: 0; border-radius: 0; flex: 1; min-height: 40px; padding: 6px 4px; font-size: 14px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button.on { background: var(--chip); color: var(--chip-text); font-weight: 600; }
+.tabs { display: flex; gap: 8px; margin: 18px 0 10px; }
+.tabs button { flex: 1; }
+.tabs button.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.item { padding: 12px 0; border-top: 1px solid var(--line); }
+.item:first-child { border-top: 0; padding-top: 0; }
+.name { font-weight: 600; word-break: break-word; }
+.meta { color: var(--muted); font-size: 14px; display: flex; gap: 6px 10px; flex-wrap: wrap; margin-top: 2px; }
+.chip { background: var(--chip); color: var(--chip-text); border-radius: 999px; padding: 0 8px; font-size: 13px; }
+.bar { height: 8px; background: var(--bar); border-radius: 99px; overflow: hidden; margin: 8px 0 4px; }
+.bar > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .4s; }
+.bar.indet > i { width: 30%; animation: slide 1.2s infinite ease-in-out; }
+@keyframes slide { from { margin-left: -30%; } to { margin-left: 100%; } }
+.status-error { color: var(--bad); } .status-done { color: var(--ok); } .status-paused { color: var(--warn); }
+.empty { color: var(--muted); text-align: center; padding: 24px 0; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.hidden { display: none !important; }
+#toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  background: #111827; color: #fff; padding: 10px 16px; border-radius: 10px; max-width: calc(100% - 32px);
+  font-size: 15px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 10; }
+#toast.show { opacity: 1; }
+.note { font-size: 14px; color: var(--muted); }
+.warn { color: var(--warn); }
+.filters { display: flex; gap: 8px; margin-bottom: 10px; }
+.filters input { flex: 1; } .filters select { width: auto; }
+code { background: var(--bg); padding: 1px 5px; border-radius: 6px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Download maniger</h1>
+    <span class="dot" id="dot" title="Connection"></span>
+    <button id="settingsBtn" class="small" aria-label="Settings">⚙️ Settings</button>
+  </header>
+
+  <!-- Settings -->
+  <section class="card hidden" id="settings">
+    <strong>Connect to the home PC</strong>
+    <p class="note">Ask whoever set up the PC for the address and secret token.
+      On the PC itself use <code>http://localhost:6801</code>. On phones use the Tailscale address,
+      like <code>https://my-pc.tail1234.ts.net</code>.</p>
+    <label for="sServer">PC address</label>
+    <input id="sServer" type="url" inputmode="url" placeholder="https://my-pc.tail1234.ts.net" autocomplete="off">
+    <label for="sSecret">Secret token</label>
+    <input id="sSecret" type="password" autocomplete="off">
+    <label for="sUser">Your name (shows who downloaded what)</label>
+    <input id="sUser" type="text" maxlength="40" placeholder="Karar">
+    <p class="note warn hidden" id="mixedWarn">This page is https, so the PC address must start with https://
+      (Tailscale gives you one), unless it is localhost.</p>
+    <div class="row end" style="margin-top:12px">
+      <button id="sCancel">Close</button>
+      <button id="sSave" class="primary">Save and connect</button>
+    </div>
+  </section>
+
+  <!-- Add -->
+  <section class="card" id="addCard">
+    <label for="urls" style="margin-top:0">Paste one or more links (one per line)</label>
+    <textarea id="urls" placeholder="https://..." autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
+    <div class="row" style="margin-top:10px">
+      <div class="seg" id="mode" role="group" aria-label="Type">
+        <button data-mode="auto" class="on">Auto</button>
+        <button data-mode="video">🎬 Video</button>
+        <button data-mode="audio">🎵 MP3</button>
+        <button data-mode="file">📦 File</button>
+      </div>
+    </div>
+    <div class="row end" style="margin-top:10px">
+      <button id="pasteBtn">📋 Paste</button>
+      <button id="addBtn" class="primary">⬇️ Download</button>
+    </div>
+    <p class="note" id="modeHelp">Auto: video sites (YouTube, Instagram, TikTok…) download as video, everything else as a file.</p>
+  </section>
+
+  <div class="tabs">
+    <button id="tabActive" class="on">Downloading <span id="activeCount"></span></button>
+    <button id="tabHistory">History</button>
+  </div>
+
+  <section class="card" id="activeList"><div class="empty">Nothing downloading right now.</div></section>
+
+  <section id="historyBox" class="hidden">
+    <div class="filters">
+      <input id="search" type="search" placeholder="Search history">
+      <select id="who"><option value="all">Everyone</option><option value="me">Only me</option></select>
+    </div>
+    <div class="card" id="historyList"><div class="empty">No downloads yet.</div></div>
+  </section>
+</div>
+<div id="toast" role="status"></div>
+
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem("dm." + k); return v === null ? d : v; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem("dm." + k, v); } catch (e) {} },
+  };
+  let cfg = { server: store.get("server", ""), secret: store.get("secret", ""), user: store.get("user", "") };
+  let mode = "auto", tab = "active", history = [], connected = false, timer = null;
+
+  // ---------- helpers
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 3500);
+  }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+  function size(n) {
+    if (!n) return "";
+    const u = ["B", "KB", "MB", "GB", "TB"]; let i = 0;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    return n.toFixed(n < 10 && i ? 1 : 0) + " " + u[i];
+  }
+  function when(ts) {
+    const d = new Date(ts * 1000), now = new Date();
+    const sameDay = d.toDateString() === now.toDateString();
+    return sameDay ? d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                   : d.toLocaleDateString([], { day: "numeric", month: "short", year: d.getFullYear() === now.getFullYear() ? undefined : "numeric" });
+  }
+  function normServer(s) {
+    s = (s || "").trim().replace(/\/+$/, "");
+    if (!s) return "";
+    if (!/^https?:\/\//i.test(s)) s = (/^(localhost|127\.)/i.test(s) ? "http://" : "https://") + s;
+    return s;
+  }
+  function isMixed(s) {
+    return location.protocol === "https:" && /^http:\/\//i.test(s) && !/^http:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/i.test(s);
+  }
+  const KIND = { video: "🎬", audio: "🎵", file: "📦" };
+
+  async function api(path, body) {
+    if (!cfg.server) throw new Error("Open Settings and enter the PC address.");
+    const opts = { headers: { "X-Secret": cfg.secret }, cache: "no-store" };
+    if (body) { opts.method = "POST"; opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
+    let r;
+    try { r = await fetch(cfg.server + path, opts); }
+    catch (e) { throw new Error("Can't reach the PC. Is it on and is start.bat running?"); }
+    let data = {};
+    try { data = await r.json(); } catch (e) {}
+    if (!r.ok) throw new Error(data.error || ("Error " + r.status));
+    return data;
+  }
+  function setConnected(ok) {
+    connected = ok;
+    $("dot").className = "dot " + (ok ? "ok" : "bad");
+    $("dot").title = ok ? "Connected to the PC" : "Not connected";
+  }
+
+  // ---------- settings
+  function openSettings() {
+    $("sServer").value = cfg.server; $("sSecret").value = cfg.secret; $("sUser").value = cfg.user;
+    $("settings").classList.remove("hidden"); checkMixed();
+  }
+  function checkMixed() { $("mixedWarn").classList.toggle("hidden", !isMixed(normServer($("sServer").value))); }
+  $("sServer").addEventListener("input", checkMixed);
+  $("settingsBtn").onclick = () => $("settings").classList.contains("hidden") ? openSettings() : $("settings").classList.add("hidden");
+  $("sCancel").onclick = () => $("settings").classList.add("hidden");
+  $("sSave").onclick = async () => {
+    cfg = { server: normServer($("sServer").value), secret: $("sSecret").value.trim(), user: $("sUser").value.trim() };
+    store.set("server", cfg.server); store.set("secret", cfg.secret); store.set("user", cfg.user);
+    try {
+      await api("/api/info");
+      setConnected(true); $("settings").classList.add("hidden"); toast("Connected ✓"); refresh(true);
+    } catch (e) { setConnected(false); toast(e.message); }
+  };
+
+  // ---------- add
+  $("mode").addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    mode = b.dataset.mode;
+    [...$("mode").children].forEach((x) => x.classList.toggle("on", x === b));
+    $("modeHelp").textContent = {
+      auto: "Auto: video sites (YouTube, Instagram, TikTok…) download as video, everything else as a file.",
+      video: "Video: best quality up to 1080p, saved as MP4.",
+      audio: "MP3: only the sound, good for songs and lectures.",
+      file: "File: direct links to zip, exe, photos, PDFs, torrents (magnet links)…",
+    }[mode];
+  });
+  $("pasteBtn").onclick = async () => {
+    try { const t = await navigator.clipboard.readText(); if (t) $("urls").value = ($("urls").value ? $("urls").value + "\n" : "") + t.trim(); }
+    catch (e) { toast("Long-press the box and choose Paste."); }
+  };
+  $("addBtn").onclick = async () => {
+    const urls = $("urls").value.split(/\s+/).map((s) => s.trim()).filter(Boolean);
+    if (!urls.length) return toast("Paste a link first.");
+    $("addBtn").disabled = true;
+    try {
+      const r = await api("/api/add", { urls, mode, user: cfg.user });
+      const bad = r.added.filter((a) => a.error);
+      const good = r.added.length - bad.length;
+      toast(good ? `Started ${good} download${good > 1 ? "s" : ""}` + (bad.length ? `, ${bad.length} not a link` : "") : "That doesn't look like a link.");
+      if (good) { $("urls").value = ""; showTab("active"); refresh(); }
+    } catch (e) { toast(e.message); }
+    finally { $("addBtn").disabled = false; }
+  };
+
+  // ---------- tabs
+  function showTab(t) {
+    tab = t;
+    $("tabActive").classList.toggle("on", t === "active");
+    $("tabHistory").classList.toggle("on", t === "history");
+    $("activeList").classList.toggle("hidden", t !== "active");
+    $("historyBox").classList.toggle("hidden", t !== "history");
+    if (t === "history") loadHistory();
+  }
+  $("tabActive").onclick = () => showTab("active");
+  $("tabHistory").onclick = () => showTab("history");
+
+  // ---------- active list
+  function renderActive(items) {
+    $("activeCount").textContent = items.length ? `(${items.length})` : "";
+    if (!items.length) { $("activeList").innerHTML = '<div class="empty">Nothing downloading right now.</div>'; return; }
+    $("activeList").innerHTML = items.map((it) => {
+      if (it.kind === "error") return `<div class="item status-error">${esc(it.name)}</div>`;
+      const pct = it.total ? Math.min(100, (it.done / it.total) * 100) : 0;
+      const parts = [];
+      if (it.total) parts.push(`${size(it.done) || "0 B"} of ${size(it.total)} · ${pct.toFixed(0)}%`);
+      else if (it.done) parts.push(size(it.done));
+      if (it.speed && it.status === "active") parts.push(size(it.speed) + "/s");
+      const label = it.status === "active" ? "" : ({ waiting: "Waiting", paused: "Paused" }[it.status] || it.status);
+      const isFile = it.kind === "file";
+      return `<div class="item">
+        <div class="name">${KIND[it.kind] || ""} ${esc(it.name)}</div>
+        <div class="bar ${!it.total && it.status === "active" ? "indet" : ""}"><i style="width:${pct}%"></i></div>
+        <div class="meta">${label ? `<span class="status-paused">${esc(label)}</span>` : ""}
+          <span>${parts.join(" · ") || "Starting…"}</span>${it.user ? `<span class="chip">${esc(it.user)}</span>` : ""}</div>
+        <div class="actions">
+          ${isFile && it.status === "active" ? `<button class="small" data-act="pause" data-id="${esc(it.id)}">⏸ Pause</button>` : ""}
+          ${isFile && it.status === "paused" ? `<button class="small" data-act="resume" data-id="${esc(it.id)}">▶️ Resume</button>` : ""}
+          <button class="small" data-act="remove" data-id="${esc(it.id)}">✖ Cancel</button>
+        </div></div>`;
+    }).join("");
+  }
+  $("activeList").addEventListener("click", async (e) => {
+    const b = e.target.closest("button[data-act]"); if (!b) return;
+    if (b.dataset.act === "remove" && !confirm("Cancel this download?")) return;
+    b.disabled = true;
+    try { await api("/api/action", { id: b.dataset.id, action: b.dataset.act }); refresh(); }
+    catch (err) { toast(err.message); b.disabled = false; }
+  });
+
+  // ---------- history
+  async function loadHistory() {
+    try { history = (await api("/api/history")).items; renderHistory(); setConnected(true); }
+    catch (e) { setConnected(false); $("historyList").innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+  }
+  function fileUrl(h) {
+    return cfg.server + "/files/" + h.path.split("/").map(encodeURIComponent).join("/") + "?token=" + encodeURIComponent(cfg.secret);
+  }
+  function renderHistory() {
+    const q = $("search").value.trim().toLowerCase(), onlyMe = $("who").value === "me";
+    const list = history.filter((h) =>
+      (!onlyMe || (h.user || "").toLowerCase() === cfg.user.toLowerCase()) &&
+      (!q || (h.name + " " + h.url + " " + (h.user || "")).toLowerCase().includes(q)));
+    if (!list.length) { $("historyList").innerHTML = `<div class="empty">${history.length ? "Nothing matches." : "No downloads yet."}</div>`; return; }
+    $("historyList").innerHTML = list.slice(0, 300).map((h) => `<div class="item">
+      <div class="name">${KIND[h.kind] || ""} ${esc(h.name)}</div>
+      <div class="meta">
+        <span class="status-${h.status === "done" ? "done" : "error"}">${h.status === "done" ? "✓ Done" : "✗ Failed"}</span>
+        <span>${when(h.time)}</span>${h.size ? `<span>${size(h.size)}</span>` : ""}
+        ${h.user ? `<span class="chip">${esc(h.user)}</span>` : ""}</div>
+      ${h.error ? `<div class="meta status-error">${esc(h.error)}</div>` : ""}
+      <div class="actions">
+        ${h.status === "done" && h.path ? `<a class="btn small" href="${esc(fileUrl(h))}" target="_blank" rel="noopener">📲 Save to this device</a>` : ""}
+        ${h.url ? `<button class="small" data-copy="${esc(h.url)}">🔗 Copy link</button>` : ""}
+        ${h.status !== "done" && h.url ? `<button class="small" data-retry="${esc(h.url)}" data-kind="${esc(h.kind)}">↻ Try again</button>` : ""}
+        <button class="small" data-forget="${esc(h.id)}">🗑 Remove from list</button>
+      </div></div>`).join("");
+  }
+  $("search").addEventListener("input", renderHistory);
+  $("who").addEventListener("change", renderHistory);
+  $("historyList").addEventListener("click", async (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.copy) {
+      try { await navigator.clipboard.writeText(b.dataset.copy); toast("Link copied"); } catch (err) { toast(b.dataset.copy); }
+    } else if (b.dataset.retry) {
+      try { await api("/api/add", { urls: [b.dataset.retry], mode: b.dataset.kind === "file" ? "file" : b.dataset.kind, user: cfg.user }); toast("Started again"); showTab("active"); refresh(); }
+      catch (err) { toast(err.message); }
+    } else if (b.dataset.forget) {
+      if (!confirm("Remove from the history list? The file stays on the PC.")) return;
+      try { await api("/api/action", { id: "h-" + b.dataset.forget, action: "remove" }); history = history.filter((h) => h.id !== b.dataset.forget); renderHistory(); }
+      catch (err) { toast(err.message); }
+    }
+  });
+
+  // ---------- polling
+  let lastActiveIds = "";
+  async function refresh(force) {
+    clearTimeout(timer);
+    if (cfg.server && cfg.secret) {
+      try {
+        const items = (await api("/api/active")).items;
+        renderActive(items); setConnected(true);
+        const ids = items.map((i) => i.id).join(",");
+        if ((ids !== lastActiveIds || force) && tab === "history") loadHistory();
+        lastActiveIds = ids;
+      } catch (e) {
+        setConnected(false);
+        $("activeList").innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+      }
+    }
+    timer = setTimeout(refresh, document.hidden ? 15000 : 1500);
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+
+  // ---------- start
+  const params = new URLSearchParams(location.search);
+  const shared = params.get("url") || params.get("text") || "";
+  const m = shared.match(/(https?:\/\/|magnet:)\S+/i);
+  if (m) $("urls").value = m[0];
+  if (!cfg.server || !cfg.secret) { openSettings(); $("dot").className = "dot"; }
+  refresh(true);
+})();
+</script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 # Download maniger - one-time setup for Windows
-# Downloads aria2 (download engine), yt-dlp (video sites) and ffmpeg (joins video+audio),
+# Downloads aria2 (download engine), yt-dlp (video sites), ffmpeg (joins video+audio)
+# and a small private copy of Python (runs bridge.py, the helper the web page talks to),
 # then writes aria2.conf with a random secret token.
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -13,6 +14,7 @@ New-Item -ItemType Directory -Force -Path $Bin, $Tmp | Out-Null
 $Aria2Url  = 'https://github.com/aria2/aria2/releases/download/release-1.37.0/aria2-1.37.0-win-64bit-build1.zip'
 $YtDlpUrl  = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe'
 $FfmpegUrl = 'https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip'
+$PythonUrl = 'https://www.python.org/ftp/python/3.12.8/python-3.12.8-embed-amd64.zip'
 
 function Get-File($Url, $Out) {
     Write-Host "  Downloading $(Split-Path -Leaf $Url) ..."
@@ -24,21 +26,21 @@ Write-Host '=== Download maniger setup ===' -ForegroundColor Cyan
 
 # 1. aria2
 if (-not (Test-Path (Join-Path $Bin 'aria2c.exe'))) {
-    Write-Host '[1/3] aria2'
+    Write-Host '[1/4] aria2'
     $zip = Join-Path $Tmp 'aria2.zip'
     Get-File $Aria2Url $zip
     Expand-Archive -Path $zip -DestinationPath $Tmp -Force
     Get-ChildItem -Path $Tmp -Recurse -Filter 'aria2c.exe' | Select-Object -First 1 |
         Copy-Item -Destination $Bin -Force
-} else { Write-Host '[1/3] aria2 already installed' }
+} else { Write-Host '[1/4] aria2 already installed' }
 
 # 2. yt-dlp (always refresh: video sites change often)
-Write-Host '[2/3] yt-dlp'
+Write-Host '[2/4] yt-dlp'
 Get-File $YtDlpUrl (Join-Path $Bin 'yt-dlp.exe')
 
 # 3. ffmpeg
 if (-not (Test-Path (Join-Path $Bin 'ffmpeg.exe'))) {
-    Write-Host '[3/3] ffmpeg (about 150 MB, please wait)'
+    Write-Host '[3/4] ffmpeg (about 150 MB, please wait)'
     $zip = Join-Path $Tmp 'ffmpeg.zip'
     Get-File $FfmpegUrl $zip
     Expand-Archive -Path $zip -DestinationPath $Tmp -Force
@@ -46,7 +48,16 @@ if (-not (Test-Path (Join-Path $Bin 'ffmpeg.exe'))) {
         Get-ChildItem -Path $Tmp -Recurse -Filter $exe | Select-Object -First 1 |
             Copy-Item -Destination $Bin -Force
     }
-} else { Write-Host '[3/3] ffmpeg already installed' }
+} else { Write-Host '[3/4] ffmpeg already installed' }
+
+# 4. Python (private copy, only used for bridge.py)
+$PyDir = Join-Path $Bin 'python'
+if (-not (Test-Path (Join-Path $PyDir 'python.exe'))) {
+    Write-Host '[4/4] Python helper'
+    $zip = Join-Path $Tmp 'python.zip'
+    Get-File $PythonUrl $zip
+    Expand-Archive -Path $zip -DestinationPath $PyDir -Force
+} else { Write-Host '[4/4] Python helper already installed' }
 
 Remove-Item -Recurse -Force $Tmp
 
@@ -112,5 +123,6 @@ Write-Host ''
 Write-Host 'Setup finished.' -ForegroundColor Green
 Write-Host "Downloads will be saved to: $DownloadDir"
 Write-Host "Your secret token (keep it private, the web page asks for it): $Secret" -ForegroundColor Yellow
+try { Set-Clipboard -Value $Secret; Write-Host '(Copied to the clipboard.)' } catch {}
 Write-Host 'It is also saved in MY-SECRET.txt in this folder.'
 Write-Host 'Next: double-click start.bat'

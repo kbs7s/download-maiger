@@ -1,3 +1,5 @@
 @echo off
-taskkill /im aria2c.exe /f >nul 2>&1 && echo Engine stopped. || echo Engine was not running.
+cd /d "%~dp0"
+powershell -NoProfile -Command "$d=(Resolve-Path '.').Path; Get-Process python,aria2c -ErrorAction SilentlyContinue | Where-Object { $_.Path -like ($d + '*') } | Stop-Process -Force"
+echo Download maniger stopped.
 timeout /t 3 >nul
