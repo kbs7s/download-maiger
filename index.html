@@ -160,7 +160,7 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 6px; font-size: 1
       clearAll: "Clear all history", clearQ: "Clear the whole history on this device?",
       linkCopied: "Link copied", pasteFirst: "Paste a link first.", pasteManual: "Long-press the box and choose Paste.",
       notLink: "Not a link: {u}", videoSite: "Opening cobalt.tools to save the video. The link is also copied in case you need to paste it there.",
-      cobalt: "🎬 Download with cobalt", viaCobalt: "↗ Sent to cobalt", cobaltNote: "Video links are downloaded by cobalt.tools. If its page didn't open, tap the button.",
+      cobalt: "🎬 Download with cobalt", telegram: "📨 Send to Telegram bot", viaCobalt: "↗ Sent to cobalt", cobaltNote: "Video links are downloaded by cobalt.tools. If its page didn't open, tap the button.",
       pickWho: "Choose who you are first.",
       ghLimit: "GitHub limit reached (60 folder lookups per hour). Try again later.",
       ghNotFound: "GitHub folder not found (is the repository private?)", ghEmpty: "That GitHub folder is empty.",
@@ -183,7 +183,7 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 6px; font-size: 1
       clearAll: "مسح السجل كله", clearQ: "مسح السجل كله على هذا الجهاز؟",
       linkCopied: "تم نسخ الرابط", pasteFirst: "الصق رابطاً أولاً.", pasteManual: "اضغط مطولاً على المربع واختر لصق.",
       notLink: "ليس رابطاً: {u}", videoSite: "جارٍ فتح cobalt.tools لحفظ الفيديو. تم نسخ الرابط أيضاً إذا احتجت لصقه هناك.",
-      cobalt: "🎬 تنزيل عبر cobalt", viaCobalt: "↗ أُرسل إلى cobalt", cobaltNote: "روابط الفيديو تُنزَّل عبر cobalt.tools. إذا لم تُفتح صفحته، اضغط الزر.",
+      cobalt: "🎬 تنزيل عبر cobalt", telegram: "📨 إرسال لبوت التلكرام", viaCobalt: "↗ أُرسل إلى cobalt", cobaltNote: "روابط الفيديو تُنزَّل عبر cobalt.tools. إذا لم تُفتح صفحته، اضغط الزر.",
       pickWho: "اختر من أنت أولاً.",
       ghLimit: "تم الوصول إلى حد GitHub (60 طلباً في الساعة). حاول لاحقاً.",
       ghNotFound: "لم يتم العثور على مجلد GitHub (هل المستودع خاص؟)", ghEmpty: "مجلد GitHub هذا فارغ.",
@@ -483,7 +483,7 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 6px; font-size: 1
       ${h.status === "cobalt" ? `<div class="meta">${t("cobaltNote")}</div>` : ""}
       ${h.error ? `<div class="meta status-error"><bdi>${esc(h.error)}</bdi></div>` : ""}
       <div class="actions">
-        ${h.status === "cobalt" ? `<button class="small primary" data-cobalt="${esc(h.url)}">${t("cobalt")}</button>` : h.status === "handed" ? `<button class="small primary" data-open="${esc(h.directUrl || h.url)}">${t("openBrowser")}</button>` : `<button class="small" data-again="${esc(h.url)}">${t("again")}</button>`}
+        ${h.status === "cobalt" ? `<button class="small primary" data-cobalt="${esc(h.url)}">${t("cobalt")}</button><a class="btn small" href="https://t.me/share/url?url=${encodeURIComponent(h.url)}" target="_blank" rel="noopener">${t("telegram")}</a>` : h.status === "handed" ? `<button class="small primary" data-open="${esc(h.directUrl || h.url)}">${t("openBrowser")}</button>` : `<button class="small" data-again="${esc(h.url)}">${t("again")}</button>`}
         <button class="small" data-copy="${esc(h.url)}">${t("copy")}</button>
         <button class="small" data-forget="${esc(h.id)}">${t("forget")}</button>
       </div></div>`;
