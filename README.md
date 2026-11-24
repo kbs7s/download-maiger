@@ -1,55 +1,32 @@
 # Download maniger
 
-A download manager for me and my family. One Windows PC at home does the downloading; everyone controls it from a web page on their phone (Android or iPhone) or computer, with a history of what was downloaded.
+A download manager for me and my family that runs entirely in the browser. No PC, no server, no install: open the page on any phone (Android or iPhone) or computer, paste a link, and the file is saved straight to that device.
 
-- **Web page:** https://kbs7s.github.io/download-maiger/ : paste a link, watch progress, see the family history, and save finished files to your phone.
-- **Engine on the PC:** [aria2](https://github.com/aria2/aria2) for normal files (zip, exe, photos, audio, torrents, anything with a link), [yt-dlp](https://github.com/yt-dlp/yt-dlp) and ffmpeg for video sites, and a small helper (`engine/bridge.py`) that the web page talks to. It keeps one shared history in `engine/history.json`.
-- Advanced: the helper also forwards `/jsonrpc` to aria2, so [AriaNg](https://github.com/mayswind/AriaNg) can connect to the same address too.
+**Open it:** https://kbs7s.github.io/download-maiger/
 
-## Setup on the Windows PC (one time)
+## What it does
 
-1. On this repo's GitHub page, click **Code → Download ZIP**, and unzip it somewhere permanent, for example `C:\DownloadManiger`.
-2. Open the `engine` folder and double-click **`setup.bat`**.
-   - If Windows says "Windows protected your PC", click **More info → Run anyway**.
-   - It downloads aria2, yt-dlp, ffmpeg and a small private copy of Python (about 210 MB in total) into `engine\bin`.
-   - It creates a **secret token** and shows it. It is also saved in `engine\MY-SECRET.txt`. Keep it private: anyone with it can control the downloads.
-   - It asks whether to start automatically with Windows. Say **Y** if the PC is usually on.
-3. Double-click **`start.bat`**. Keep that window open (minimize it). Closing it stops the engine.
-4. On the PC, open https://kbs7s.github.io/download-maiger/, tap **Settings**, and enter address `http://localhost:6801`, the secret token, and your name.
+- **Paste one or more links** (one per line) and tap **Download**. Progress, speed and a Cancel button show while the page downloads.
+- **Direct links** (zip, exe, apk, photos, PDF, MP3, MP4 files, …) are saved to the device.
+  - If a website doesn't allow downloads from other pages, or the file is bigger than about 700 MB, the page hands the link to the browser's own downloader instead. The file still lands in your Downloads (on iPhone: the **Files** app), and History marks it "Browser download".
+- **GitHub links (like DownGit):**
+  - a folder link (`github.com/user/repo/tree/branch/folder`) downloads just that folder as one zip, built in the browser,
+  - a file link (`.../blob/...`) downloads that file,
+  - a repo link (`github.com/user/repo`) downloads the whole repo as a zip.
+  - GitHub allows 60 folder lookups per hour per network without signing in.
+- **History** of everything downloaded on this device, with search, filter by person, Download again, Copy link and Remove.
+- **Family profiles:** the first time, the page asks "Who is using this device?". Pick a name or add one; each download records who added it. Tap the name at the top to switch.
+- **Arabic / English:** tap **ع** at the top for Arabic (right-to-left), **EN** to go back. Devices set to Arabic open in Arabic.
+- **Add to home screen:** iPhone: Safari **Share → Add to Home Screen**. Android: Chrome **⋮ → Add to Home screen**. On Android you can then **Share** a link from another app straight to "Downloads".
 
-Files are saved to `Downloads\DownloadManiger` in your Windows user folder.
+## What it can't do
 
-### Other buttons in the `engine` folder
+- **Video pages** like YouTube, Instagram, TikTok and Facebook. These hide the real video file, and only a program such as yt-dlp running on a computer can extract it. A web page alone can't. The page tells you when it skips one.
+- **Torrents:** magnet links are passed to a torrent app if one is installed.
+- History and profiles are stored on each device (in the browser), not shared between devices.
 
-| File | What it does |
-|---|---|
-| `start.bat` | Starts the download engine and the helper |
-| `stop.bat` | Stops it |
-| `video.bat` | Paste a YouTube/Instagram/TikTok/Facebook link and download the video (up to 1080p, MP4) |
-| `update.bat` | Updates yt-dlp. Run this if video downloads start failing |
-| `setup.bat` | Run again any time; it keeps your secret token |
+## How it works
 
-## Using it from phones (Android and iPhone)
+Everything is one static page (`index.html`) on GitHub Pages. Downloads use the browser's `fetch` and are saved with a download link. GitHub folders are listed with the GitHub API and zipped with [JSZip](https://stuk.github.io/jszip/) (`lib/jszip.min.js`, MIT). History and settings live in the browser's local storage. Nothing is sent anywhere except to the site you're downloading from.
 
-The web page is on `https://kbs7s.github.io/download-maiger/`, but the engine is on the home PC. Browsers block an `https` page from talking to a plain `http` address on your PC, and phones on mobile data can't reach the home PC at all. The fix we recommend is **Tailscale** (free for personal use):
-
-1. Install Tailscale on the PC and on each family phone ([tailscale.com/download](https://tailscale.com/download)), and sign in with the same account (or invite family members to your Tailscale network).
-2. In the Tailscale admin page, turn on **MagicDNS** and **HTTPS certificates** (DNS tab).
-3. On the PC, open Command Prompt and run once:
-   ```
-   tailscale serve --bg 6801
-   ```
-   This gives the engine a secure address like `https://your-pc-name.your-tailnet.ts.net`, reachable only from your own devices, at home or away.
-4. On each phone, open the web page, tap **Settings**, and enter that `https://...ts.net` address, the secret token, and the person's name.
-5. Add it to the home screen: on iPhone, Safari **Share → Add to Home Screen**; on Android, Chrome **⋮ → Add to Home screen**. On Android you can then **Share** a link from YouTube or any app straight to "Downloads".
-
-**Saving to a phone:** in **History**, tap **Save to this device** on a finished download to copy it from the PC to the phone.
-
-The engine itself only listens on the PC (`localhost`), so it is never exposed to your home Wi-Fi or the internet directly; Tailscale is the only way in.
-
-## Status
-
-- [x] Step 1: Engine setup scripts (this folder)
-- [x] Step 2: Web page on GitHub Pages, with download list, shared history and save-to-phone
-- [ ] Step 3: Family features: mobile layout, Arabic/English, history per person, GitHub folder download (like DownGit)
-- [ ] Step 4: Test videos, photos, audio, zip and exe files, then share with family
+Earlier versions used a home Windows PC with aria2 and yt-dlp. That code is in the git history (`engine/` folder) if video downloads are ever wanted again.
