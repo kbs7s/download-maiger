@@ -1,9 +1,0 @@
-engine/bin/
-engine/tmp/
-engine/aria2.conf
-engine/aria2.session
-engine/MY-SECRET.txt
-engine/history.json
-engine/history.json.tmp
-__pycache__/
-engine/people.json
