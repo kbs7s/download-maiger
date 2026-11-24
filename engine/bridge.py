@@ -31,9 +31,12 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 BIN = os.path.join(ROOT, "bin")
 CONF = os.path.join(ROOT, "aria2.conf")
 HISTORY_FILE = os.path.join(ROOT, "history.json")
+PEOPLE_FILE = os.path.join(ROOT, "people.json")
+GITHUB_API = os.environ.get("DM_GITHUB_API", "https://api.github.com")
+GITHUB_RAW = os.environ.get("DM_GITHUB_RAW", "https://raw.githubusercontent.com")
 BRIDGE_PORT = int(os.environ.get("DM_PORT", "6801"))
 ARIA2_PORT = 6800
-VERSION = "1.0"
+VERSION = "1.1"
 
 # Sites that need yt-dlp instead of a plain download
 VIDEO_SITES = (
@@ -299,6 +302,144 @@ def is_video_site(url):
     return any(host == s or host.endswith("." + s) for s in VIDEO_SITES)
 
 
+# ---------------------------------------------------------------- GitHub folders (like DownGit)
+
+GH_RE = re.compile(r"^https?://(?:www\.)?github\.com/([^/?#]+)/([^/?#]+?)(?:\.git)?"
+                   r"(?:/(tree|blob)/([^?#]+?))?/?(?:[?#].*)?$", re.I)
+
+
+def github_target(url):
+    """(owner, repo, 'tree'|'blob'|None, 'ref/path') for github.com repo links, else None."""
+    m = GH_RE.match(url)
+    if not m:
+        return None
+    return m.group(1), m.group(2), m.group(3), m.group(4) or ""
+
+
+def gh_json(url):
+    req = urllib.request.Request(url, headers={"User-Agent": "download-maniger",
+                                               "Accept": "application/vnd.github+json"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.load(r)
+
+
+def unique_path(path):
+    base, ext = os.path.splitext(path) if not os.path.isdir(path) else (path, "")
+    n = 2
+    while os.path.exists(path):
+        path = "%s (%d)%s" % (base, n, ext)
+        n += 1
+    return path
+
+
+def run_github(job):
+    owner, repo, _, rest = github_target(job["url"])
+    parts = [urllib.parse.unquote(p) for p in rest.split("/") if p]
+    tree = ref = None
+    folder = ""
+    try:
+        # A branch name can contain "/", so try the shortest ref first.
+        for i in range(1, min(len(parts), 4) + 1):
+            ref = "/".join(parts[:i])
+            try:
+                tree = gh_json("%s/repos/%s/%s/git/trees/%s?recursive=1" % (
+                    GITHUB_API, owner, repo, urllib.parse.quote(ref, safe="")))
+                folder = "/".join(parts[i:])
+                break
+            except urllib.error.HTTPError as e:
+                if e.code == 404:
+                    continue
+                if e.code in (403, 429):
+                    raise RuntimeError("GitHub limit reached (60 folder lookups per hour). Try again later.")
+                raise
+        if tree is None:
+            raise RuntimeError("GitHub folder not found (is the repository private?)")
+        prefix = folder + "/" if folder else ""
+        blobs = [e for e in tree.get("tree", [])
+                 if e.get("type") == "blob" and e["path"].startswith(prefix)]
+        if not blobs:
+            raise RuntimeError("That GitHub folder is empty or was not found")
+        name = re.sub(r'[<>:"/\\|?*]', "_", folder.split("/")[-1] if folder else repo)
+        job["name"] = name + " (GitHub folder, %d files)" % len(blobs)
+        job["total"] = sum(e.get("size", 0) for e in blobs)
+        dest = unique_path(os.path.join(DOWNLOAD_DIR, name))
+        for e in blobs:
+            if job.get("cancelled"):
+                break
+            rel = e["path"][len(prefix):]
+            out = os.path.join(dest, *rel.split("/"))
+            os.makedirs(os.path.dirname(out), exist_ok=True)
+            raw = "%s/%s/%s/%s/%s" % (GITHUB_RAW, owner, repo, urllib.parse.quote(ref),
+                                     urllib.parse.quote(e["path"]))
+            req = urllib.request.Request(raw, headers={"User-Agent": "download-maniger"})
+            t0 = time.time()
+            with urllib.request.urlopen(req, timeout=60) as r, open(out, "wb") as f:
+                while True:
+                    chunk = r.read(256 * 1024)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+                    job["done"] += len(chunk)
+            job["speed"] = e.get("size", 0) / max(time.time() - t0, 0.001)
+        if job.get("cancelled"):
+            job["status"] = "removed"
+        else:
+            # one zip file, easy to save on a phone; the folder stays on the PC too
+            zip_base = unique_path(dest + ".zip")[:-4]
+            job["file"] = shutil.make_archive(zip_base, "zip", root_dir=os.path.dirname(dest),
+                                              base_dir=os.path.basename(dest))
+            job["status"] = "done"
+    except Exception as e:
+        job["status"] = "error"
+        job["error"] = str(e)[:300]
+    finish_video(job)
+
+
+def start_github(url, user):
+    job = {"id": uuid.uuid4().hex[:12], "url": url, "mode": "github", "user": user,
+           "status": "active", "name": url, "done": 0, "total": 0, "speed": 0}
+    with jobs_lock:
+        jobs[job["id"]] = job
+    threading.Thread(target=run_github, args=(job,), daemon=True).start()
+    return job["id"]
+
+
+def github_file_url(url):
+    """Direct download link for a GitHub repo (zip) or single file, else None."""
+    owner, repo, kind, rest = github_target(url)
+    if kind is None:
+        return "https://github.com/%s/%s/archive/HEAD.zip" % (owner, repo), repo + ".zip"
+    if kind == "blob":
+        return "%s/%s/%s/%s" % (GITHUB_RAW, owner, repo, rest), None
+    return None
+
+
+# ---------------------------------------------------------------- people
+
+people_lock = threading.Lock()
+
+
+def api_people(add=None):
+    with people_lock:
+        try:
+            with open(PEOPLE_FILE, encoding="utf-8") as f:
+                people = json.load(f)
+        except (OSError, ValueError):
+            people = []
+        if add:
+            add = str(add).strip()[:40]
+            if add and add.lower() not in (p.lower() for p in people):
+                people.append(add)
+                with open(PEOPLE_FILE, "w", encoding="utf-8") as f:
+                    json.dump(people, f, ensure_ascii=False)
+    with history_lock:
+        for h in HISTORY:
+            u = h.get("user")
+            if u and u.lower() not in (p.lower() for p in people):
+                people.append(u)
+    return {"people": people}
+
+
 # ---------------------------------------------------------------- API
 
 def api_add(data):
@@ -313,12 +454,24 @@ def api_add(data):
             added.append({"url": url, "error": "Not a link"})
             continue
         m = mode
+        gh = github_target(url) if m in ("auto", "file") else None
+        if gh and gh[2] == "tree":
+            added.append({"url": url, "id": "v-" + start_github(url, user)})
+            continue
         if m == "auto":
             m = "video" if is_video_site(url) else "file"
         if m in ("video", "audio"):
             added.append({"url": url, "id": "v-" + start_video(url, m, user)})
         else:
-            gid = aria2("addUri", [url], {})
+            opts = {}
+            direct = github_file_url(url) if gh else None
+            if direct:
+                url_to_get, out = direct
+                if out:
+                    opts["out"] = out
+            else:
+                url_to_get = url
+            gid = aria2("addUri", [url_to_get], opts)
             gid_users[gid] = user
             gid_urls[gid] = url
             added.append({"url": url, "id": "a-" + gid})
@@ -369,9 +522,10 @@ def api_action(data):
             raise ValueError("Videos can only be cancelled")
         with jobs_lock:
             job = jobs.get(item_id[2:])
-        if job and job.get("proc"):
+        if job:
             job["cancelled"] = True
-            job["proc"].terminate()
+            if job.get("proc"):
+                job["proc"].terminate()
     elif item_id.startswith("h-"):  # forget a history entry (the file stays on the PC)
         with history_lock:
             HISTORY[:] = [h for h in HISTORY if h["id"] != item_id[2:]]
@@ -437,6 +591,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_json(200, api_info())
             if url.path == "/api/active":
                 return self.send_json(200, api_active())
+            if url.path == "/api/people":
+                return self.send_json(200, api_people())
             if url.path == "/api/history":
                 with history_lock:
                     return self.send_json(200, {"items": HISTORY[:2000]})
@@ -459,6 +615,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_json(200, api_add(data))
             if url.path == "/api/action":
                 return self.send_json(200, api_action(data))
+            if url.path == "/api/people":
+                return self.send_json(200, api_people(add=data.get("name")))
         except Exception as e:
             return self.send_json(400, {"error": str(e)})
         self.send_json(404, {"error": "Not found"})

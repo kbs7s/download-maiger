@@ -6,3 +6,4 @@ engine/MY-SECRET.txt
 engine/history.json
 engine/history.json.tmp
 __pycache__/
+engine/people.json

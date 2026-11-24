@@ -43,6 +43,12 @@ The web page is on `https://kbs7s.github.io/download-maiger/`, but the engine is
 4. On each phone, open the web page, tap **Settings**, and enter that `https://...ts.net` address, the secret token, and the person's name.
 5. Add it to the home screen: on iPhone, Safari **Share → Add to Home Screen**; on Android, Chrome **⋮ → Add to Home screen**. On Android you can then **Share** a link from YouTube or any app straight to "Downloads".
 
+**Family profiles:** the first time each phone connects, it asks "Who is using this device?". Pick your name or add a new one. Every download shows who added it, and in **History** you can filter by person. Tap your name at the top to switch.
+
+**Arabic:** tap **ع** at the top to switch to Arabic, and **EN** to switch back. Phones set to Arabic open in Arabic automatically.
+
+**GitHub links (like DownGit):** paste a GitHub folder link (`github.com/user/repo/tree/branch/folder`) and the PC downloads just that folder and makes a zip. A repo link downloads the whole repo as a zip, and a file link downloads that file.
+
 **Saving to a phone:** in **History**, tap **Save to this device** on a finished download to copy it from the PC to the phone.
 
 The engine itself only listens on the PC (`localhost`), so it is never exposed to your home Wi-Fi or the internet directly; Tailscale is the only way in.
@@ -51,5 +57,5 @@ The engine itself only listens on the PC (`localhost`), so it is never exposed t
 
 - [x] Step 1: Engine setup scripts (this folder)
 - [x] Step 2: Web page on GitHub Pages, with download list, shared history and save-to-phone
-- [ ] Step 3: Family features: mobile layout, Arabic/English, history per person, GitHub folder download (like DownGit)
+- [x] Step 3: Family features: Arabic/English, family profiles with history per person, GitHub folder download (like DownGit)
 - [ ] Step 4: Test videos, photos, audio, zip and exe files, then share with family
