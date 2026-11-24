@@ -1,0 +1,5 @@
+engine/bin/
+engine/tmp/
+engine/aria2.conf
+engine/aria2.session
+engine/MY-SECRET.txt
