@@ -26,6 +26,10 @@ A download manager for me and my family that runs entirely in the browser. No PC
 - **Torrents:** magnet links are passed to a torrent app if one is installed.
 - History and profiles are stored on each device (in the browser), not shared between devices.
 
+## Telegram bot
+
+There is also a Telegram bot (in [`bot/`](bot/README.md)) that downloads YouTube, Pinterest, Instagram, TikTok and other videos, and sends them back in the chat, up to 2 GB. It runs on a free Oracle Cloud server, not a home PC. Setup steps (in Arabic) are in [bot/README.md](bot/README.md). In the page's History, video links have a **Send to Telegram bot** button that shares the link to the bot.
+
 ## How it works
 
 Everything is one static page (`index.html`) on GitHub Pages. Downloads use the browser's `fetch` and are saved with a download link. GitHub folders are listed with the GitHub API and zipped with [JSZip](https://stuk.github.io/jszip/) (`lib/jszip.min.js`, MIT). History and settings live in the browser's local storage. Nothing is sent anywhere except to the site you're downloading from.
